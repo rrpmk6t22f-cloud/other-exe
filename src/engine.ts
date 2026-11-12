@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { genome } from './genome.ts';
 import { acts, endings, games, items, jobs, people, places, scenes, stages } from './content.ts';
 
 const text = z.string().max(2000);
@@ -22,6 +23,7 @@ const bondSchema = z.object({ affinity: score, trust: score, closeness: score, t
 const finiteDate = z.number().finite().min(0).max(8_640_000_000_000_000);
 export const saveSchema = z.object({
   version: z.literal(1), id: z.uuid(), seed: z.number().int().min(0).max(0xffffffff),
+  generation: z.literal(1).optional(), habitatAt: finiteDate.optional(),
   at: finiteDate, rev: counter, hatched: z.boolean(), day: counter.min(1), act: counter.min(1).max(5),
   stage: counter.max(5), forms: z.array(counter.max(5)).max(6), points: counter.max(8), credits: counter,
   needs: needsSchema, place: smallText, line: text, flags: ids, inventory: ids, outfit: smallText, room: smallText,
@@ -46,7 +48,9 @@ export const care = {
 } as const;
 
 export type Command = (
-  | { type: 'hatch' | 'day' | 'evolve' | 'clear-chat' | 'clear-preferences' | 'quit' | 'resume' }
+  | { type: 'day' | 'evolve' | 'clear-chat' | 'clear-preferences' | 'quit' | 'resume' }
+  | { type: 'hatch'; seed?: number }
+  | { type: 'touch'; gesture: 'pet' | 'hold' | 'spark' }
   | { type: 'care'; action: keyof typeof care }
   | { type: 'chat'; message: string }
   | { type: 'live-reply'; turn: number; reply: string }
@@ -137,6 +141,7 @@ function authoredReply(state: Save, message: string) {
   if (/\b(weather|news|economy|today’s headlines|headlines)\b/.test(term)) return 'I can look at the source cards with you in Outside. This room doesn’t get the news by itself.';
   if (/\b(pronouns?|gender|identity|name)\b/.test(term)) return 'Pip, they. I like having a name I picked before the form learned about me.';
   if (/\b(feel|how are|tired|energy)\b/.test(term)) {
+    if (state.generation && state.needs.energy >= 40) return genome(state.seed).temperament.conversation;
     return state.needs.energy < 40 ? 'The room has a very persuasive horizontal quality right now.' : 'I feel awake enough to be interested in things that have no practical use.';
   }
   if (/\b(work|job|office|career)\b/.test(term)) {
@@ -175,12 +180,39 @@ export function reduce(previous: Save, command: Command): Save {
     }
     case 'hatch':
       if (s.hatched) return previous;
+      if (command.seed !== undefined) {
+        if (!Number.isInteger(command.seed) || command.seed < 0 || command.seed > 0xffffffff) return previous;
+        s.seed = command.seed;
+      }
+      s.generation = 1;
       s.hatched = true;
       s.stage = 1;
       s.forms = [1];
       say(s, 'I have questions. Do you have a sandwich?', true);
-      memory(s, 'First light', 'A living signal took shape in the room.');
+      const { family, temperament } = genome(s.seed);
+      memory(s, 'First light', `A ${family.name.toLowerCase()} signal took shape. Pip’s first impression was ${temperament.name.toLowerCase()}.`);
       break;
+    case 'touch': {
+      const traits = s.generation ? genome(s.seed).temperament : undefined;
+      if (command.gesture === 'spark') {
+        if (!s.gamesToday.includes('habitat-sparks')) {
+          add(s.gamesToday, 'habitat-sparks');
+          s.needs.stimulation = clamp(s.needs.stimulation + 10);
+          s.needs.stress = clamp(s.needs.stress - 3);
+        }
+        say(s, 'Three lights. I thought the last one might get away.');
+      } else {
+        const hold = command.gesture === 'hold';
+        if (command.now >= (s.habitatAt ?? 0) + 6_000) {
+          if (hold) s.needs.stress = clamp(s.needs.stress - (traits?.gain ?? 5));
+          else s.needs.connection = clamp(s.needs.connection + (traits?.gain ?? 5));
+          s.habitatAt = command.now;
+        }
+        say(s, hold ? (traits?.hold ?? 'It’s nice to sit together for a while.') :
+          (traits?.touch ?? 'I like the way the light moves when you do that.'));
+      }
+      break;
+    }
     case 'care': {
       const action = care[command.action];
       if (!action) return previous;

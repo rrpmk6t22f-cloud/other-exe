@@ -10,7 +10,7 @@ function Toggle({ label, detail, value, onChange }: { label: string; detail?: st
   return <label className="toggle"><span><strong>{label}</strong>{detail && <small>{detail}</small>}</span><input type="checkbox" checked={value} onChange={event => onChange(event.target.checked)} /></label>;
 }
 
-export function Settings({ s, send, ask, notify, replace, install }: GameUI & { replace: (save: Save) => Promise<void>; install: () => void }) {
+export function Settings({ s, send, ask, notify, replace, install, swapHabitat }: GameUI & { replace: (save: Save) => Promise<void>; install: () => void; swapHabitat: () => Promise<void> }) {
   const [preference, setPreference] = useState('');
   const picker = useRef<HTMLInputElement>(null);
   const setting = (settings: Partial<Save['settings']>) => void send({ type: 'settings', settings });
@@ -55,6 +55,8 @@ export function Settings({ s, send, ask, notify, replace, install }: GameUI & { 
             ask('Replace this save?', <><p>The backup contains Day {next.day}. Export your current save first to keep a copy.</p><div className="button-row"><Button onClick={() => exportSave(s)}>Export current save</Button><Button primary onClick={() => void replace(next)}>Import Day {next.day}</Button></div></>);
           } catch (error) { notify(error instanceof Error ? error.message : 'The save could not be read.'); }
         }} />
+        <Button onClick={() => ask('Switch habitat?', <><p>Open a second habitat to hatch another signal, or return to the one you previously opened. Both habitats are saved on this device.</p>
+          <Button primary onClick={event => { const button = event.currentTarget; button.disabled = true; void swapHabitat().finally(() => { button.disabled = false; }); }}>Switch habitat</Button></>)}>Switch habitat</Button>
         <Button primary onClick={install}>Install OTHER.EXE</Button>
       </section>
     </div>

@@ -59,7 +59,7 @@ export function Conversation({ s, send, go, firstMessage }: GameUI & { firstMess
     <div className="mind-grid">
       <section className="card conversation">
         <header className="conversation-header">
-          <div className="conversation-avatar"><Organism seed={s.seed} stage={s.stage} still={s.settings.still} /></div>
+          <div className="conversation-avatar"><Organism seed={s.seed} generation={s.generation} stage={s.stage} still={s.settings.still} /></div>
           <div><strong>Pip</strong><div className="muted">they/them</div></div>
           <Meta className="right">{s.settings.live && mindEndpoint && navigator.onLine ? 'Live enabled' : 'Local dialogue'}</Meta>
         </header>

@@ -1,8 +1,8 @@
-import { useEffect, useRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useRef, type ComponentProps, type ReactNode } from 'react';
 import { ArrowUpRight, X } from 'lucide-react';
 import { figma } from './Organism';
 
-export function Button({ primary = false, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { primary?: boolean }) {
+export function Button({ primary = false, className = '', ...props }: ComponentProps<'button'> & { primary?: boolean }) {
   return <button type="button" className={`button ${primary ? 'primary' : ''} ${className}`} {...props} />;
 }
 

@@ -1,16 +1,69 @@
-import { ArrowRight, ArrowUpRight, BrushCleaning, ChevronDown, Moon, Soup, Sparkles, Shirt, MessageCircle, Sprout, SquareActivity } from 'lucide-react';
+import { useRef, useState, type PointerEvent } from 'react';
+import { Hand, ArrowRight, ArrowUpRight, BrushCleaning, ChevronDown, Moon, Soup, Sparkles, Shirt, MessageCircle, Sprout, SquareActivity } from 'lucide-react';
 import { acts, items, stages } from './content';
 import { canEvolve, mood, sceneFor, type Save } from './engine';
-import { figma, Organism } from './Organism';
+import { Incubator } from './Incubator';
+import { figma, Organism, type Contact } from './Organism';
 import { Atmosphere, Button, Meta } from './ui';
 import type { GameUI } from './types';
 
 const needs = { hunger: 'Hunger', energy: 'Energy', hygiene: 'Hygiene', connection: 'Connection', stimulation: 'Stimulation', stress: 'Stress' };
+const sparkPositions = [[25, 47], [74, 37], [60, 61]] as const;
 const first = [
   ['Feed', Soup], ['Talk', MessageCircle], ['Play', Sparkles], ['Rest', Moon],
 ] as const;
 
 export function Home({ s, send, go, ask, reaction, reactTo }: GameUI & { reaction: string; reactTo: (value: string) => void }) {
+  const contact = useRef<Contact>({ x: .5, y: .46, active: false, at: -Infinity });
+  const press = useRef<{ id: number; at: number; x: number; y: number; moved: boolean } | null>(null);
+  const [spark, setSpark] = useState<number | null>(null);
+  const sparkStart = useRef<HTMLButtonElement>(null);
+  const sparkHit = useRef(false);
+
+  function hatchPreview() {
+    ask('In the incubator', <Incubator initialSeed={s.seed} still={s.settings.still} hatch={async seed => {
+      if (await send({ type: 'hatch', seed })) reactTo('Hatch');
+    }} />, true);
+  }
+
+  function touch(gesture: 'pet' | 'hold' | 'spark') {
+    reactTo(gesture === 'hold' ? 'Hold' : 'Play');
+    void send({ type: 'touch', gesture });
+  }
+
+  function move(event: PointerEvent<HTMLButtonElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    contact.current.x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    contact.current.y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+    contact.current.active = true;
+    const started = press.current;
+    if (started?.id === event.pointerId && Math.hypot(event.clientX - started.x, event.clientY - started.y) >= 12) {
+      if (!started.moved) contact.current.at = performance.now();
+      started.moved = true;
+    }
+  }
+
+  function release(event: PointerEvent<HTMLButtonElement>) {
+    const started = press.current;
+    if (!started || started.id !== event.pointerId) return;
+    press.current = null;
+    contact.current.at = performance.now();
+    contact.current.active = event.pointerType === 'mouse';
+    touch(!started.moved && performance.now() - started.at >= 550 ? 'hold' : 'pet');
+  }
+
+  function catchSpark() {
+    if (spark === null || sparkHit.current) return;
+    sparkHit.current = true;
+    reactTo('Play');
+    if (spark === sparkPositions.length - 1) {
+      setSpark(null);
+      touch('spark');
+      requestAnimationFrame(() => sparkStart.current?.focus());
+    } else setSpark(spark + 1);
+    requestAnimationFrame(() => { sparkHit.current = false; });
+  }
+
   const scene = sceneFor(s);
   const state = mood(s);
   const tint = s.room === 'paper' ? '' : items.find(item => item.id === s.room)?.color;
@@ -43,19 +96,47 @@ export function Home({ s, send, go, ask, reaction, reactTo }: GameUI & { reactio
             <Meta>{s.hatched ? stages[s.stage] + ' / ' + s.place : 'Unknown file / a living signal'}</Meta>
             <span className="stage-live"><i />{state}</span>
           </div>
-          <Organism seed={s.seed} stage={s.stage} outfit={s.outfit} mood={state} still={s.settings.still} reaction={reaction} className="habitat-organism" />
+          <Organism seed={s.seed} generation={s.generation} stage={s.stage} contact={contact} outfit={s.outfit} mood={state} still={s.settings.still} reaction={reaction} className="habitat-organism" />
+          <button type="button" className="habitat-target" aria-label={s.hatched ? 'Pet Pip' : 'Open the incubator'}
+            onPointerDown={event => {
+              if (!s.hatched || !event.isPrimary || event.button !== 0) return;
+              move(event);
+              press.current = { id: event.pointerId, at: performance.now(), x: event.clientX, y: event.clientY, moved: false };
+              event.currentTarget.setPointerCapture(event.pointerId);
+            }}
+            onPointerMove={event => { if (s.hatched && event.isPrimary) move(event); }}
+            onPointerUp={release}
+            onPointerCancel={() => { press.current = null; contact.current.active = false; }}
+            onPointerLeave={() => { if (!press.current) contact.current.active = false; }}
+            onClick={event => {
+              if (!s.hatched) hatchPreview();
+              else if (event.detail === 0) { contact.current.at = performance.now(); touch('pet'); }
+            }}>
+            <span>{s.hatched ? 'Tap or brush to pet · hold to soothe' : 'Open incubator'}</span>
+          </button>
+          {spark !== null && <button type="button" className="habitat-spark" aria-label={`Catch spark ${spark + 1} of 3`}
+            style={{ left: sparkPositions[spark][0] + '%', top: sparkPositions[spark][1] + '%' }}
+            onClick={catchSpark}><Sparkles size={22} aria-hidden="true" /></button>}
           <div className="stage-caption">
             {s.hatched && <Meta>Pip · they/them</Meta>}
             <p aria-live="polite">{s.line}</p>
           </div>
         </section>
 
-        {!s.hatched ? <div className="hatch-row"><Button primary onClick={() => { reactTo('Hatch'); void send({ type: 'hatch' }); }}><Sprout size={18} /> Hatch the signal <ArrowRight size={17} /></Button><span>Your save lives on this device.</span></div> :
+        {!s.hatched ? <div className="hatch-row"><Button primary onClick={hatchPreview}><Sprout size={18} /> Hatch the signal <ArrowRight size={17} /></Button><span>Your save lives on this device.</span></div> :
           <div className="care-actions" aria-label="Care actions">
             {first.map(([action, Icon]) => <Button key={action} primary={action === 'Talk'} onClick={() => action === 'Talk' ? go('mind') : careAction(action)}><Icon size={17} />{action}</Button>)}
             <Button onClick={() => careAction('Clean')}><BrushCleaning size={17} />Clean</Button>
             <Button onClick={() => go('wardrobe')}><Shirt size={17} />Dress</Button>
           </div>}
+        {s.hatched && <div className="habitat-actions">
+          <Button onClick={() => touch('hold')}><Hand size={16} /> Soothe</Button>
+          <Button ref={sparkStart} aria-pressed={spark !== null} onClick={() => {
+            if (spark !== null) { setSpark(null); return; }
+            setSpark(0);
+            requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.habitat-spark')?.focus({ preventScroll: true }));
+          }}><Sparkles size={16} />{spark === null ? 'Catch sparks' : `Stop · ${spark}/3 caught`}</Button>
+        </div>}
         {s.hatched && <details className="mobile-needs">
           <summary><SquareActivity size={16} /> Wellbeing <ChevronDown size={16} /></summary>
           <NeedList s={s} />

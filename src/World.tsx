@@ -80,7 +80,7 @@ export function Wardrobe({ s, send, ask, go }: GameUI) {
     <Heading over="Wardrobe" title="Things to" italic="try on.">{s.credits} credits · Expression changes Pip’s appearance.</Heading>
     <div className="wardrobe-grid">
       <div className="card wardrobe-preview" style={mode === 'Room' ? { background: item?.color } : undefined}>
-        <Meta>{preview ? 'Preview' : 'Equipped'}</Meta><Organism seed={s.seed} stage={s.stage} outfit={mode === 'Wearable' && preview ? preview : s.outfit} still={s.settings.still} />
+        <Meta>{preview ? 'Preview' : 'Equipped'}</Meta><Organism seed={s.seed} generation={s.generation} stage={s.stage} outfit={mode === 'Wearable' && preview ? preview : s.outfit} still={s.settings.still} />
         <h2>{item?.name}</h2>
         <Button onClick={() => go('evolution')}>Evolution <ArrowUpRight size={15} /></Button>
       </div>

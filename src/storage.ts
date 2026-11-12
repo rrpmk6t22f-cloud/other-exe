@@ -1,3 +1,4 @@
+import { randomSeed } from './genome';
 import { newSave, reduce, saveSchema, type Command, type Save } from './engine';
 
 const scope = new URL('.', location.href).pathname;
@@ -14,7 +15,7 @@ function connect() {
 }
 
 export function freshSave() {
-  return newSave(crypto.randomUUID(), crypto.getRandomValues(new Uint32Array(1))[0], Date.now());
+  return newSave(crypto.randomUUID(), randomSeed(), Date.now());
 }
 
 export function issue<T extends Omit<Command, 'key' | 'now'>>(input: T): T & { key: string; now: number } {
@@ -34,6 +35,38 @@ export async function transact(update: (current: Save | undefined) => Save): Pro
         const current = request.result === undefined ? undefined : saveSchema.parse(request.result);
         result = update(current);
         if (result !== current) store.put(result, 'save');
+      } catch (problem) {
+        error = problem;
+        transaction.abort();
+      }
+    };
+    transaction.oncomplete = () => resolve(result);
+    transaction.onabort = () => reject(error ?? transaction.error);
+    transaction.onerror = () => reject(error ?? transaction.error);
+  });
+}
+
+export async function switchHabitat() {
+  const database = await connect();
+  return new Promise<Save>((resolve, reject) => {
+    const transaction = database.transaction('local', 'readwrite');
+    const store = transaction.objectStore('local');
+    const active = store.get('save');
+    const other = store.get('alternate');
+    let result: Save;
+    let error: unknown;
+    other.onsuccess = () => {
+      try {
+        const current = saveSchema.parse(active.result);
+        const alternate = other.result === undefined ? undefined : saveSchema.parse(other.result);
+        if (alternate) result = reduce(alternate, issue({ type: 'resume' as const }));
+        else {
+          result = freshSave();
+          const { theme, still, contrast } = current.settings;
+          result.settings = { ...result.settings, theme, still, contrast };
+        }
+        store.put(current, 'alternate');
+        store.put(result, 'save');
       } catch (problem) {
         error = problem;
         transaction.abort();

@@ -34,8 +34,14 @@ Without those variables, the browser uses Open-Meteo directly. Weather is an est
 
 ## Release scope
 
-This build includes five short acts with eight reachable endings, six untimed mini-games, eight contacts and jobs, ten locations, procedural evolution, a small wardrobe and room collection, and an attributed reading shelf. Conversation uses authored, state-aware local replies. The specification’s longer content library, generated portraits, live news and economic feeds, cloud saves, and push notifications are future work.
+This build includes five short acts with eight reachable endings, six untimed mini-games, eight contacts and jobs, ten locations, procedural evolution, a small wardrobe and room collection, and an attributed reading shelf. Conversation uses authored, state-aware local replies. The specification’s longer content library, AI-generated portraits, live news and economic feeds, cloud saves, and push notifications are future work.
 
 A separately operated live conversation gateway can be enabled with `VITE_MIND_ENDPOINT`. It must accept the JSON request defined in `src/Conversation.tsx` and return an object with a bounded `utterance` string. Live use is opt-in and falls back to local dialogue on errors. The gateway operator is responsible for authentication, rate limits, provider access, and moderation. No live model gateway is deployed with this version.
 
 Design is adapted from the supplied Figma reference. The living signal is drawn at runtime. Typography uses Google Fonts with system fallbacks. UI icons are from Lucide.
+
+## The habitat
+
+Tap or brush across Pip to pet them. Hold for a moment, or choose **Soothe**, to help them settle. **Catch sparks** starts a three-target game with a daily wellbeing bonus. The habitat also works with the keyboard.
+
+The incubator previews six procedural families and four temperaments. Once hatched, the seed keeps that creature’s palette, silhouette, and disposition consistent across the game. Earlier saves retain the original appearance. Open **Settings → Switch habitat** to hatch a second creature while keeping your first save. Evolution can export a procedural PNG portrait of the current or previewed form.

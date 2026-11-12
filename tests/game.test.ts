@@ -114,3 +114,30 @@ test('a live reply can change speech only on the expected revision and after con
   assert.deepEqual(reply.inventory, chat.inventory);
   assert.deepEqual(reply.completed, chat.completed);
 });
+
+test('hatching commits the selected genome and keeps earlier saves compatible', () => {
+  const original = fresh();
+  assert.equal(doIt(original, { type: 'hatch', seed: -1 }), original);
+  const pip = doIt(original, { type: 'hatch', seed: 8512 });
+  assert.equal(pip.generation, 1);
+  assert.equal(pip.seed, 8512);
+  assert.equal(doIt(pip, { type: 'hatch', seed: 9 }), pip);
+  const { generation, ...legacy } = pip;
+  assert.equal(saveSchema.parse(legacy).generation, undefined);
+  assert.deepEqual(saveSchema.parse(pip), pip);
+});
+
+test('habitat care is free with a cooldown and the spark bonus is daily', () => {
+  const state = hatch();
+  const pet = doIt(state, { type: 'touch', gesture: 'pet' });
+  assert.ok(pet.needs.connection > state.needs.connection);
+  assert.equal(pet.points, state.points);
+  const repeated = doIt(pet, { type: 'touch', gesture: 'pet' }, baseline + 200);
+  assert.equal(repeated.needs.connection, pet.needs.connection);
+  const held = doIt(repeated, { type: 'touch', gesture: 'hold' }, baseline + 6000);
+  assert.ok(held.needs.stress < repeated.needs.stress);
+  const game = doIt(held, { type: 'touch', gesture: 'spark' }, baseline + 6000);
+  assert.equal(game.needs.stimulation, held.needs.stimulation + 10);
+  assert.equal(game.credits, held.credits);
+  assert.equal(doIt(game, { type: 'touch', gesture: 'spark' }, baseline + 7000).needs.stimulation, game.needs.stimulation);
+});

@@ -8,7 +8,7 @@ import { Outside } from './Outside';
 import { Settings } from './Settings';
 import { Career, Games, Social, Wardrobe, World } from './World';
 import { reduce, type Command, type Save } from './engine';
-import { boot, freshSave, issue, transact } from './storage';
+import { boot, freshSave, issue, switchHabitat, transact } from './storage';
 import type { GameUI, Input, Page } from './types';
 import { Button, Heading, Meta, Modal } from './ui';
 import { clearWeather } from './weather';
@@ -122,7 +122,7 @@ function App() {
     const command = issue(input) as Command;
     let next: Save;
     try {
-      next = volatile.current ? reduce(before, command) : await transact(saved => reduce(saved ?? before, command));
+      next = volatile.current ? reduce(before, command) : await transact(saved => saved && saved.id !== before.id ? saved : reduce(saved ?? before, command));
     } catch {
       warn(true);
       setNotice('Couldn’t write the save. Export a copy in Settings.');
@@ -151,6 +151,20 @@ function App() {
       setNotice('The backup could not be saved on this device.');
     }
   };
+
+  async function swapHabitat() {
+    if (volatile.current) { setNotice('Switching habitats requires local storage.'); return; }
+    try {
+      const next = await switchHabitat();
+      setState(next);
+      channel.current?.postMessage(next.rev);
+      close();
+      go('home');
+      setNotice(next.hatched ? 'Habitat restored.' : 'Another signal is stirring.');
+    } catch {
+      setNotice('Couldn’t switch habitats. Your current save is still open.');
+    }
+  }
 
   function reactTo(value: string) {
     clearTimeout(reactionTimer.current);
@@ -205,7 +219,7 @@ function App() {
           page === 'wardrobe' ? <Wardrobe {...ui} /> :
           page === 'archive' ? <Archive {...ui} /> :
           page === 'evolution' ? <Evolution {...ui} /> :
-          page === 'games' ? <Games {...ui} /> : <Settings {...ui} replace={replace} install={install} />}
+          page === 'games' ? <Games {...ui} /> : <Settings {...ui} replace={replace} install={install} swapHabitat={swapHabitat} />}
       </main>
     </div>
     <nav className="mobile-nav" aria-label="Main navigation">

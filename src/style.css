@@ -289,3 +289,26 @@ dialog::backdrop { background: #19231e70; }
   .stage { height: clamp(320px, 51vh, 417px); }
   .stage-caption p { font-size: clamp(25px, 4.7vh, 38px); }
 }
+
+.habitat-target { position: absolute; inset: 0; width: 100%; border: 0; background: transparent; padding: 0; color: #264634; touch-action: pan-y; cursor: pointer; }
+.habitat-target:focus-visible { outline-offset: -4px; border-radius: inherit; }
+.habitat-target span {
+  position: absolute; top: 53px; left: 24px; padding: 5px 8px;
+  border: 1px solid #4e725643; border-radius: 20px; background: #edf0deba;
+  font: 500 11px/1.35 var(--font-data);
+}
+.habitat-spark {
+  position: absolute; z-index: 1; transform: translate(-50%, -50%); width: 46px; height: 46px;
+  display: grid; place-items: center; border-radius: 50%; color: #264634; background: #faf5c7;
+  border: 1px solid #507453; box-shadow: 0 0 0 5px #fdf6c374, 0 0 23px #ffffc8;
+}
+.habitat-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 9px; }
+.habitat-actions .button { background: transparent; }
+.incubator-field { height: min(252px, 52dvh); border-radius: 17px; position: relative; overflow: hidden; color: #25372a; }
+.incubator-field canvas { width: 100%; height: 100%; display: block; }
+.incubator-label { position: absolute; bottom: 12px; left: 15px; }
+.incubator-label .meta { color: #265a43; }
+.incubator-label strong { display: block; font: 400 27px/1.03 var(--font-display); }
+@media (max-width: 767px) {
+  .habitat-target span { top: 40px; left: 13px; }
+}

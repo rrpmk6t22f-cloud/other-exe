@@ -1,7 +1,9 @@
 import { ArrowRight, BookOpen, Download, Fingerprint, Lock } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { acts, endings, stages } from './content';
 import { canEvolve, endingOpen } from './engine';
+import { genome } from './genome';
+import { exportPortrait } from './portrait';
 import { figma, Organism } from './Organism';
 import { readings } from './Outside';
 import { Atmosphere, Button, External, Heading, Meta } from './ui';
@@ -34,6 +36,8 @@ export function Archive({ s, send, go, ask }: GameUI) {
 
 export function Evolution({ s, send, ask }: GameUI) {
   const ready = canEvolve(s);
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const traits = s.generation ? genome(s.seed) : undefined;
   const [preview, setPreview] = useState(false);
   const shape = ready && preview ? s.stage + 1 : s.stage;
   return <>
@@ -42,12 +46,16 @@ export function Evolution({ s, send, ask }: GameUI) {
     <div className="wardrobe-grid">
       <div className="card wardrobe-preview evolution-stage">
         <Meta>{ready && preview ? 'Preview' : 'Current form'}</Meta>
-        <Organism seed={s.seed} stage={shape} outfit={s.outfit} still={s.settings.still} />
+        <Organism seed={s.seed} generation={s.generation} stage={shape} canvasRef={canvas} outfit={s.outfit} still={s.settings.still} />
         <h2>{stages[shape]}</h2>
+        <Button onClick={() => {
+          if (canvas.current) exportPortrait(canvas.current, stages[shape], traits?.family.name ?? 'Original signal', s.seed, traits?.family.tint ?? '#b8cf85');
+        }}><Download size={16} /> Download portrait</Button>
       </div>
       <div className="stack">
         <section className="card feature">
           <Fingerprint size={24} /><Meta>Signal {s.seed.toString(16).padStart(8, '0').toUpperCase()}</Meta>
+          {traits && <p>{traits.family.name} signal · {traits.temperament.name}</p>}
           <h2>{ready ? 'A new form is ready.' : 'A form of their own.'}</h2>
           <p>{ready ? 'Pip has been thinking about what they might look like next. Their earlier forms stay in the Archive.' : 'New forms become available as Pip moves through the story.'}</p>
           {ready && <div className="button-row"><Button aria-pressed={preview} onClick={() => setPreview(!preview)}>{preview ? 'See current form' : 'Preview ' + stages[s.stage + 1]}</Button>
@@ -55,7 +63,7 @@ export function Evolution({ s, send, ask }: GameUI) {
           </div>}
         </section>
         <section className="card feature"><Meta>Past forms</Meta>
-          <div className="forms">{s.forms.map(stage => <div key={stage}><Organism seed={s.seed} stage={stage} still /><span>{stages[stage]}</span></div>)}</div>
+          <div className="forms">{s.forms.map(stage => <div key={stage}><Organism seed={s.seed} generation={s.generation} stage={stage} still /><span>{stages[stage]}</span></div>)}</div>
           <details className="study"><summary>Original signal study</summary><img src={figma('7-51-imgLivingSignalVectorSpecimen')} alt="Original Figma study of a particle organism" /><a className="text-link" href={figma('7-51-imgLivingSignalVectorSpecimen')} download="other-exe-signal-study.svg">Download study <Download size={15} /></a></details>
         </section>
       </div>
