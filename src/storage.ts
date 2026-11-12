@@ -1,12 +1,12 @@
 import { randomSeed } from './genome';
+import { storageScope } from './mode';
 import { newSave, reduce, saveSchema, type Command, type Save } from './engine';
 
-const scope = new URL('.', location.href).pathname;
 let db: Promise<IDBDatabase> | undefined;
 
 function connect() {
   db ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open('other-exe:' + scope, 1);
+    const request = indexedDB.open('other-exe:' + storageScope, 1);
     request.onupgradeneeded = () => request.result.createObjectStore('local');
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);

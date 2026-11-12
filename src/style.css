@@ -312,3 +312,12 @@ dialog::backdrop { background: #19231e70; }
 @media (max-width: 767px) {
   .habitat-target span { top: 40px; left: 13px; }
 }
+
+.dev-strip {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px;
+  max-width: calc(var(--layout-width) - 2 * var(--page-gutter)); margin: 0 var(--page-gutter) 12px;
+  padding: 8px 14px; background: var(--color-accentSoft); border: 1px solid var(--card-stroke); border-radius: 12px;
+}
+@media (min-width: 1580px) { .dev-strip { margin-inline: auto; } }
+.dev-strip > div:first-child { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.dev-strip > div:first-child > span:last-child { font-size: 13px; }

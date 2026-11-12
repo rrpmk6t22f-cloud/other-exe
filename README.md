@@ -45,3 +45,7 @@ Design is adapted from the supplied Figma reference. The living signal is drawn 
 Tap or brush across Pip to pet them. Hold for a moment, or choose **Soothe**, to help them settle. **Catch sparks** starts a three-target game with a daily wellbeing bonus. The habitat also works with the keyboard.
 
 The incubator previews six procedural families and four temperaments. Once hatched, the seed keeps that creature’s palette, silhouette, and disposition consistent across the game. Earlier saves retain the original appearance. Open **Settings → Switch habitat** to hatch a second creature while keeping your first save. Evolution can export a procedural PNG portrait of the current or previewed form.
+
+## Dev Mode
+
+Open **Settings → Open Dev Mode**, or add `?dev=1` to the game URL. **Quick hatch** skips the incubator. **Rehatch** starts over with a new character in the isolated test save. **Exit Dev Mode** returns to the regular game and its original save.

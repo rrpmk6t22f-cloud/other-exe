@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Download, Upload } from 'lucide-react';
 import { cities, type City, type Save } from './engine';
+import { devMode, playUrl } from './mode';
 import { mindEndpoint } from './Conversation';
 import { exportSave, importSave } from './storage';
 import { Button, Heading, Meta } from './ui';
@@ -58,6 +59,7 @@ export function Settings({ s, send, ask, notify, replace, install, swapHabitat }
         <Button onClick={() => ask('Switch habitat?', <><p>Open a second habitat to hatch another signal, or return to the one you previously opened. Both habitats are saved on this device.</p>
           <Button primary onClick={event => { const button = event.currentTarget; button.disabled = true; void swapHabitat().finally(() => { button.disabled = false; }); }}>Switch habitat</Button></>)}>Switch habitat</Button>
         <Button primary onClick={install}>Install OTHER.EXE</Button>
+        {!devMode && <a className="text-link" href={playUrl}>Open Dev Mode</a>}
       </section>
     </div>
   </>;

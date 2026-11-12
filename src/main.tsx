@@ -11,6 +11,7 @@ import { reduce, type Command, type Save } from './engine';
 import { boot, freshSave, issue, switchHabitat, transact } from './storage';
 import type { GameUI, Input, Page } from './types';
 import { Button, Heading, Meta, Modal } from './ui';
+import { devMode, playUrl, storageScope } from './mode';
 import { clearWeather } from './weather';
 import './tokens.css';
 import './style.css';
@@ -39,6 +40,7 @@ function App() {
   const closeOnSave = useRef(false);
   const [notice, setNotice] = useState('');
   const [reaction, setReaction] = useState('');
+  const [hatching, setHatching] = useState(false);
   const [firstMessage, setFirstMessage] = useState('');
   const installPrompt = useRef<InstallPrompt | undefined>(undefined);
   const reactionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -71,7 +73,7 @@ function App() {
     window.addEventListener('beforeinstallprompt', onInstall);
     document.addEventListener('visibilitychange', onFocus);
     if ('BroadcastChannel' in window) {
-      channel.current = new BroadcastChannel('other-exe:' + new URL('.', location.href).pathname);
+      channel.current = new BroadcastChannel('other-exe:' + storageScope);
       channel.current.onmessage = load;
     }
     return () => {
@@ -172,6 +174,28 @@ function App() {
     reactionTimer.current = setTimeout(() => setReaction(''), 2000);
   }
 
+  async function quickHatch() {
+    if (!devMode || hatching) return;
+    setHatching(true);
+    const hatch = (saved: Save | undefined) => {
+      const fresh = freshSave();
+      if (saved) fresh.settings = saved.settings;
+      return reduce(fresh, issue({ type: 'hatch' as const }));
+    };
+    try {
+      const next = volatile.current ? hatch(current.current) : await transact(hatch);
+      setState(next);
+      channel.current?.postMessage(next.rev);
+      go('home');
+      reactTo('Hatch');
+      setNotice('Fresh character hatched in Dev Mode.');
+    } catch {
+      setNotice('Couldn’t hatch the test character. Try again.');
+    } finally {
+      setHatching(false);
+    }
+  }
+
   function install() {
     if (matchMedia('(display-mode: standalone)').matches) { setNotice('OTHER.EXE is already running as an app.'); return; }
     if (installPrompt.current) {
@@ -202,6 +226,11 @@ function App() {
         <Meta className="wall-date">{date}</Meta>
       </div>
     </header>
+    {devMode && <section className="dev-strip" aria-label="Dev Mode">
+      <div><Meta>Dev Mode</Meta><span>Separate test save</span></div>
+      <div className="button-row"><Button primary disabled={hatching} onClick={() => void quickHatch()}><Sprout size={16} /> {save.hatched ? 'Rehatch' : 'Quick hatch'}</Button>
+        <a className="text-link" href={playUrl}>Exit Dev Mode</a></div>
+    </section>}
     {storageWarning && <div className="save-warning" role="status"><CircleHelp size={16} /> This browser can’t save progress reliably. Export a backup in Settings.</div>}
     <div className="app-shell">
       <nav className="rail" aria-label="Main navigation">
@@ -210,7 +239,7 @@ function App() {
       </nav>
       <main id="content" tabIndex={-1} className={page === 'home' ? 'home-page' : 'inner-page'}>
         {beforeHatch ? <><Heading over="Home" title="A signal" italic="is waiting.">Hatch Pip to open this part of their world.</Heading><Button primary onClick={() => go('home')}>Return to the room <ArrowRight size={17} /></Button></> :
-          page === 'home' ? <Home {...ui} reaction={reaction} reactTo={reactTo} /> :
+          page === 'home' ? <Home key={save.id} {...ui} reaction={reaction} reactTo={reactTo} /> :
           page === 'mind' ? <Conversation {...ui} firstMessage={firstMessage} /> :
           page === 'outside' ? <Outside {...ui} discuss={title => { setFirstMessage('What do you think about ' + title + '?'); go('mind'); }} /> :
           page === 'world' ? <World {...ui} /> :

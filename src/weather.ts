@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { storageScope } from './mode';
 import { cities, type City } from './engine';
 
 const weatherSchema = z.object({ current: z.object({
@@ -8,7 +9,7 @@ const record = z.object({ city: z.string(), at: z.number(), response: weatherSch
 export type Weather = z.infer<typeof record>;
 const weatherEndpoint = import.meta.env.VITE_WEATHER_ENDPOINT as string | undefined;
 const weatherKey = import.meta.env.VITE_WEATHER_ANON_KEY as string | undefined;
-const cacheKey = 'other-exe:weather:' + new URL('.', location.href).pathname;
+const cacheKey = 'other-exe:weather:' + storageScope;
 
 export async function fetchWeather(city: City, signal: AbortSignal) {
   const [latitude, longitude] = cities[city];
