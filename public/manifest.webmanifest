@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "OTHER.EXE",
+  "short_name": "OTHER.EXE",
+  "description": "A small life, still in progress.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F0E7",
+  "theme_color": "#F4F0E7",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {"src": "icons/other-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/other-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

@@ -1,0 +1,4 @@
+project_id = "other-exe"
+
+[functions.other-exe-weather]
+verify_jwt = true

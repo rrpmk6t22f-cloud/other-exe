@@ -1,0 +1,62 @@
+/* OTHER.EXE Editorial Organism · design tokens · no fonts bundled */
+:root, [data-theme="paper"] {
+  --palette-ink: #19231E;
+  --palette-paper: #F4F0E7;
+  --palette-paper-muted: #E7E6D8;
+  --palette-forest: #246249;
+  --palette-moss: #568D60;
+  --palette-lime: #B8CF85;
+  --palette-gold: #C29C59;
+  --palette-blush: #E7B8B3;
+  --palette-violet-mist: #ADACC5;
+  --palette-botanical-mist: #D4E0D2;
+  --palette-white: #FFFFFF;
+  --palette-night: #111A17;
+  --palette-night-surface: #202F2A;
+  --palette-night-text: #F3F1E9;
+  --palette-night-muted: #B5C3B7;
+  --palette-muted: #576B61;
+  --palette-line: #CFD4C9;
+  --palette-night-line: #42564D;
+  --color-canvas: var(--palette-paper);
+  --color-surface: var(--palette-white);
+  --color-surfaceAlt: var(--palette-paper-muted);
+  --color-text: var(--palette-ink);
+  --color-textMuted: var(--palette-muted);
+  --color-accent: var(--palette-forest);
+  --color-accentSoft: var(--palette-botanical-mist);
+  --color-line: var(--palette-line);
+  --color-signal: var(--palette-gold);
+  --color-highlight: var(--palette-lime);
+  --color-blush: var(--palette-blush);
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-ui: "DM Sans", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+[data-theme="night"] {
+  --color-canvas: var(--palette-night);
+  --color-surface: var(--palette-night-surface);
+  --color-surfaceAlt: var(--palette-night-surface);
+  --color-text: var(--palette-night-text);
+  --color-textMuted: var(--palette-night-muted);
+  --color-accent: var(--palette-lime);
+  --color-accentSoft: var(--palette-forest);
+  --color-line: var(--palette-night-line);
+  --color-signal: var(--palette-gold);
+  --color-highlight: var(--palette-lime);
+  --color-blush: var(--palette-blush);
+}
+:root { --space-4: 4px; }
+:root { --space-8: 8px; }
+:root { --space-12: 12px; }
+:root { --space-16: 16px; }
+:root { --space-24: 24px; }
+:root { --space-32: 32px; }
+:root { --space-48: 48px; }
+:root { --space-64: 64px; }
+:root { --radius-small: 8px; }
+:root { --radius-medium: 16px; }
+:root { --radius-large: 24px; }
+:root { --radius-xl: 32px; }
+:root { --radius-pill: 999px; }
